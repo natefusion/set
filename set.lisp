@@ -22,6 +22,7 @@
 
 (defun r-permutations (seq &optional (r (length seq))) (declare (simple-string seq) (fixnum r))
   (let ((final (make-array (nPr (length seq) r) :fill-pointer 0)))
+    (declare ((array string) final))
     (labels ((rotate (c) (declare (simple-string c))
                (dotimes (i (1- (length c)))
                  (rotatef (schar c i) (schar c (1+ i)))))
@@ -43,6 +44,7 @@
   (setf seq (copy-seq seq)) ; pass by value, not by reference (not literally, but effectively)
   (let* ((len (length seq))
          (final (make-array (factorial len) :initial-element "" :fill-pointer 0)))
+    (declare ((array string) final))
     (labels ((nswap (a b &aux (temp (aref seq a)))
                (setf (aref seq a) (aref seq b)
                      (aref seq b) temp))
@@ -58,6 +60,7 @@
 
 (defun combinations (seq r) (declare (simple-string seq) (fixnum r) (optimize speed))
   (let ((final (make-array (nCr (length seq) r) :fill-pointer 0)))
+    (declare ((array string) final))
     (labels ((recur (i r c) (declare (fixnum i r) (simple-string c))
                (loop for char across (subseq seq i)
                      for j fixnum from i
