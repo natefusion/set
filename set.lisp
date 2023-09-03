@@ -20,14 +20,7 @@
 (defun nCr (n r) (declare (fixnum n r))
   (the integer (/ (nPr n r) (factorial (- n r)))))
 
-(defun contains (seq pat)
-  (declare (string seq pat))
-  (loop with pat-perms = (permutations pat)
-        for x from 0 to (- (length seq) (length pat))
-        for wat = (subseq seq x (+ x (length pat)))
-        do (loop for y across pat-perms
-             do (when (string= y wat)
-                  (return-from contains t)))))
+
 
 (defun permutations (seq) (declare (simple-string seq) (optimize speed))
   (setf seq (copy-seq seq)) ; pass by value, not by reference (not literally, but effectively)
@@ -47,7 +40,7 @@
       final)))
 
 (defun combinations (seq r) (declare (simple-string seq) (fixnum r) (optimize speed))
-  (let ((final (make-array (choose (length seq) r) :fill-pointer 0)))
+  (let ((final (make-array (nCr (length seq) r) :fill-pointer 0)))
     (labels ((recur (i r c) (declare (fixnum i r) (simple-string c))
                (loop for char across (subseq seq i)
                      for j fixnum from i
@@ -57,3 +50,12 @@
                             (recur (1+ j) (1- r) combination)))))
       (recur 0 r "")
       final)))
+
+(defun contains (seq pat)
+  (declare (string seq pat))
+  (loop with pat-perms = (permutations pat)
+        for x from 0 to (- (length seq) (length pat))
+        for wat = (subseq seq x (+ x (length pat)))
+        do (loop for y across pat-perms
+             do (when (string= y wat)
+                  (return-from contains t)))))
