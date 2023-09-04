@@ -3,7 +3,7 @@
 
 (in-package :set)
 
-(defun factorial (n) (declare (fixnum n))
+(defun ! (n) (declare (fixnum n))
   (loop with result of-type integer = 1
         for x from 2 to n
         do (setf result (* x result))
@@ -18,11 +18,15 @@
     (setf result (* x result))))
 
 (defun nCr (n r) (declare (fixnum n r))
-  (the integer (/ (nPr n r) (factorial (- n r)))))
+  (the integer (/ (! n) (* (! r) (! (- n r))))))
 
-(defun r-permutations (seq &optional (r (length seq))) (declare (simple-string seq) (fixnum r))
-  (let ((final (make-array (nPr (length seq) r) :fill-pointer 0)))
-    (declare ((array string) final))
+(defun permutations (seq &key (r (length seq)) (repetitions nil)) (declare (simple-string seq) (fixnum r) (boolean repetitions))
+  (let ((offset (if repetitions 0 1))
+        (final (make-array (if repetitions
+                               (expt (length seq) r)
+                               (nPr (length seq) r))
+                           :fill-pointer 0)))
+    (declare ((vector string) final))
     (labels ((rotate (c) (declare (simple-string c))
                (dotimes (i (1- (length c)))
                  (rotatef (schar c i) (schar c (1+ i)))))
@@ -30,7 +34,7 @@
                (if (= r 2)
                    (loop repeat (length c)
                          for c1 = (string (schar c 0))
-                         do (loop for j from 1 below (length c)
+                         do (loop for j from offset below (length c)
                                   for c2 = (string (schar c j))
                                   do (vector-push (concatenate 'string b c1 c2) final))
                             (rotate c))    
@@ -40,34 +44,22 @@
       (recur r "" seq)
       final)))
 
-(defun permutations (seq) (declare (simple-string seq) (optimize speed))
-  (setf seq (copy-seq seq)) ; pass by value, not by reference (not literally, but effectively)
-  (let* ((len (length seq))
-         (final (make-array (factorial len) :initial-element "" :fill-pointer 0)))
-    (declare ((array string) final))
-    (labels ((nswap (a b &aux (temp (aref seq a)))
-               (setf (aref seq a) (aref seq b)
-                     (aref seq b) temp))
-             (internal (s) (declare (fixnum s))
-               (if (= s len)
-                   (vector-push (copy-seq seq) final)
-                   (loop for i from s below len
-                         do (nswap s i)
-                            (internal (1+ s))
-                            (nswap s i)))))
-      (internal 0)
-      final)))
-
-(defun combinations (seq r) (declare (simple-string seq) (fixnum r) (optimize speed))
-  (let ((final (make-array (nCr (length seq) r) :fill-pointer 0)))
-    (declare ((array string) final))
+(defun combinations (seq r &key (repetitions nil)) (declare (simple-string seq) (fixnum r) (boolean repetitions))
+  (let* ((offset (if repetitions 0 1))
+         (n (length seq))
+         (final (make-array (if repetitions
+                                (/ (! (1- (+ n r)))
+                                   (* (! r) (! (1- n))))
+                                (nCr n r))
+                            :fill-pointer 0)))
+    (declare ((vector string) final))
     (labels ((recur (i r c) (declare (fixnum i r) (simple-string c))
                (loop for char across (subseq seq i)
                      for j fixnum from i
                      for combination = (concatenate 'string c (string char))
                      do (if (= r 1)
                             (vector-push combination final) 
-                            (recur (1+ j) (1- r) combination)))))
+                            (recur (+ j offset) (1- r) combination)))))
       (recur 0 r "")
       final)))
 
@@ -77,5 +69,5 @@
         for x from 0 to (- (length seq) (length pat))
         for wat = (subseq seq x (+ x (length pat)))
         do (loop for y across pat-perms
-             do (when (string= y wat)
-                  (return-from contains t)))))
+                 do (when (string= y wat)
+                      (return-from contains t)))))
