@@ -46,24 +46,16 @@
       (recur r "" seq)
       final)))
 
-(defun combinations (seq r &key (repetitions nil)) (declare (simple-string seq) (fixnum r) (boolean repetitions))
-  (let* ((offset (if repetitions 0 1))
-         (n (length seq))
-         (final (make-array (if repetitions
-                                (/ (! (1- (+ n r)))
-                                   (* (! r) (! (1- n))))
-                                (nCr n r))
-                            :fill-pointer 0)))
-    (declare ((vector string) final))
-    (labels ((recur (i r c) (declare (fixnum i r) (simple-string c))
-               (loop for char across (subseq seq i)
-                     for j fixnum from i
-                     for combination = (concatenate 'string c (string char))
-                     do (if (= r 1)
-                            (vector-push combination final) 
-                            (recur (+ j offset) (1- r) combination)))))
-      (recur 0 r "")
-      final)))
+(defun distribute (atom list)
+  (mapcar (lambda (x) (cons atom (if (atom x) (list x) x))) list))
+
+(defun combinations (seq r &key repetitions)
+  (let ((rep (if repetitions 0 1)))
+    (labels ((recur (seq r)
+               (if (= r 1)
+                   seq
+                   (mapcon (lambda (x) (distribute (car x) (recur (nthcdr rep x) (1- r)))) seq))))
+      (recur seq r))))
 
 (defun contains (seq pat)
   (declare (string seq pat))
