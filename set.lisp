@@ -46,12 +46,10 @@
       (recur r "" seq)
       final)))
 
-(defun distribute (atom list)
-  (mapcar (lambda (x) (cons atom (if (atom x) (list x) x))) list))
-
 (defun combinations (seq r &key repetitions)
   (let ((rep (if repetitions 0 1)))
-    (labels ((recur (seq r)
+    (labels ((distribute (atom list) (mapcar (lambda (x) (cons atom (if (atom x) (list x) x))) list))
+             (recur (seq r)
                (if (= r 1)
                    seq
                    (mapcon (lambda (x) (distribute (car x) (recur (nthcdr rep x) (1- r)))) seq))))
